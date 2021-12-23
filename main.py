@@ -4,8 +4,10 @@ import pandas as pd
 from parsivar import Normalizer
 from parsivar import Tokenizer
 from parsivar import FindStems
+import math
 import pickle
 import os
+
 
 def main():
     question = input("I am your google assistance ask me your question:")
@@ -18,6 +20,7 @@ def main():
     my_stemmer = FindStems()
     sw = codecs.open('Stop_words.txt', encoding='utf-8').read().split('\r\n')
     stop_words = dict()
+    N = len(x)
     for i in sw:
         stop_words[i] = 1
     # stemmed = []
@@ -25,7 +28,7 @@ def main():
     #     with open('position.pickle', 'rb') as handle:
     #         position = pickle.load(handle)
     # else:
-    for i in range(len(x)):
+    for i in range(N):
         words = my_tokenizer.tokenize_words(my_normalizer.normalize(x[i]))
         # tmp = []
         for j in range(len(words)):
@@ -35,11 +38,21 @@ def main():
                 if b not in position:
                     position[b] = dict()
                 if i not in position[b]:
-                    position.get(b)[i] = list()
-                position.get(b).get(i).append(j)
+                    position.get(b)[i] = 0
+                temp = position.get(b).get(i)
+                position.get(b)[i] = temp + 1
             # stemmed.append(tmp)
         # with open('position.pickle', 'wb') as handle:
         #     pickle.dump(position, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
+    tfidf = dict()
+    for i in position.keys():
+        nt = len(position.get(i))
+        idf = math.log10(N / nt)
+        tfidf[i] = dict()
+        for j in position.get(i).keys():
+            tfidf.get(i)[j] = (1 + math.log10(position.get(i).get(j))) * idf
+
     question_words = my_tokenizer.tokenize_words(my_normalizer.normalize(question))
     clean_q_words = []
     q_w_locations = []

@@ -24,42 +24,44 @@ def main():
     for i in sw:
         stop_words[i] = 1
     stemmed = []
-    # if os.path.isfile('repetition.pickle'):
-    #     with open('repetition.pickle', 'rb') as handle:
-    #         repetition = pickle.load(handle)
-    # else:
-    for i in range(N):
-        words = my_tokenizer.tokenize_words(my_normalizer.normalize(x[i]))
-        # tmp = []
-        for j in range(len(words)):
-            if words[j] not in stop_words:
-                b = my_stemmer.convert_to_stem(words[j])
-                # tmp.append(b)
-                if b not in repetition:
-                    repetition[b] = dict()
-                if i not in repetition[b]:
-                    repetition.get(b)[i] = 0
-                temp = repetition.get(b).get(i)
-                repetition.get(b)[i] = temp + 1
-            # stemmed.append(tmp)
-        # with open('repetition.pickle', 'wb') as handle:
-        #     pickle.dump(repetition, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
-    tfidf = dict()
-    for i in repetition.keys():
-        nt = len(repetition.get(i))
-        idf = math.log10(N / nt)
-        tfidf[i] = dict()
-        repetition[i] = dict(sorted(repetition.get(i).items(), key=lambda item: item[1]))
-        champion_list = []
-        for j in repetition.get(i).keys():
-            champion_list.append(j)
-        for j in range(int(len(champion_list) / 2)):
-            champion_list.pop(0)
-        for j in champion_list:
-            tfidf.get(i)[j] = (1 + math.log10(repetition.get(i).get(j))) * idf
-        if i == "استقلال":
-            print(tfidf[i])
+    if os.path.isfile('tfidf.pickle'):
+        with open('tfidf.pickle', 'rb') as handle:
+            tfidf = pickle.load(handle)
+    else:
+
+        for i in range(N):
+            words = my_tokenizer.tokenize_words(my_normalizer.normalize(x[i]))
+            # tmp = []
+            for j in range(len(words)):
+                if words[j] not in stop_words:
+                    b = my_stemmer.convert_to_stem(words[j])
+                    # tmp.append(b)
+                    if b not in repetition:
+                        repetition[b] = dict()
+                    if i not in repetition[b]:
+                        repetition.get(b)[i] = 0
+                    temp = repetition.get(b).get(i)
+                    repetition.get(b)[i] = temp + 1
+                # stemmed.append(tmp)
+            # with open('repetition.pickle', 'wb') as handle:
+            #     pickle.dump(repetition, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
+        tfidf = dict()
+        for i in repetition.keys():
+            nt = len(repetition.get(i))
+            idf = math.log10(N / nt)
+            tfidf[i] = dict()
+            repetition[i] = dict(sorted(repetition.get(i).items(), key=lambda item: item[1]))
+            champion_list = []
+            for j in repetition.get(i).keys():
+                champion_list.append(j)
+            for j in range(int(len(champion_list) / 2)):
+                champion_list.pop(0)
+            for j in champion_list:
+                tfidf.get(i)[j] = (1 + math.log10(repetition.get(i).get(j))) * idf
+        with open('tfidf.pickle', 'wb') as handle:
+            pickle.dump(tfidf, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
     question_words = my_tokenizer.tokenize_words(my_normalizer.normalize(question))
     clean_q_words = []
@@ -68,7 +70,7 @@ def main():
     for i in range(len(question_words)):
         if question_words[i] not in stop_words:
             b = my_stemmer.convert_to_stem(question_words[i])
-            if b not in repetition:
+            if b not in tfidf:
                 print("No match found.")
                 return
             if b not in q_repetition:
@@ -79,7 +81,6 @@ def main():
 
     q_tf = dict()
     q_vector_size = 0.0
-
     for i in q_repetition.keys():
         q_tf[i] = (1 + math.log10(q_repetition.get(i)))
         # print(q_repetition.get(i))
@@ -98,15 +99,18 @@ def main():
                 vector_size = vector_size + (tfidf.get(j).get(i) * tfidf.get(j).get(i))
         if vector_size != 0.0:
             similarity[i] = sum / (q_vector_size * math.sqrt(vector_size))
-            print(sum, q_vector_size * math.sqrt(vector_size))
+            # print(sum, q_vector_size * math.sqrt(vector_size))
         else:
             del similarity[i]
     similarity = dict(sorted(similarity.items(), key=lambda item: item[1]))
-    print(similarity)
+    # print(similarity)
+
     results = []
     for i in similarity.keys():
         results.append(i)
     for i in range((len(results) - 1), -1, -1):
         print(title[results[i]])
+
+
 if __name__ == '__main__':
     main()

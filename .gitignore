@@ -1,3 +1,4 @@
 venv/
 .idea/
 IR1_7k_news.xlsx
+tfidf.pickle

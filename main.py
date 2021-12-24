@@ -52,12 +52,13 @@ def main():
         tfidf[i] = dict()
         for j in Repetition.get(i).keys():
             tfidf.get(i)[j] = (1 + math.log10(Repetition.get(i).get(j))) * idf
+            if i == "استقلال":
+                print(Repetition.get(i).get(j), nt ,N, j)
 
     question_words = my_tokenizer.tokenize_words(my_normalizer.normalize(question))
     clean_q_words = []
     # q_w_locations = []
     q_repetition = dict()
-    q_in_tfidf = dict()
     for i in range(len(question_words)):
         if question_words[i] not in stop_words:
             b = my_stemmer.convert_to_stem(question_words[i])
@@ -68,17 +69,35 @@ def main():
                 q_repetition[b] = 0
             q_repetition[b] = q_repetition.get(b) + 1
             # q_w_locations.append(Repetition[b])
-            q_in_tfidf[b] = tfidf.get(b)
             clean_q_words.append(b)
 
     q_tf = dict()
     q_vector_size = 0.0
+
     for i in q_repetition.keys():
         q_tf[i] = (1 + math.log10(q_repetition.get(i)))
-        print(q_repetition.get(i))
+        # print(q_repetition.get(i))
         q_vector_size = q_vector_size + (q_tf.get(i) * q_tf.get(i))
     q_vector_size = math.sqrt(q_vector_size)
-    
+
+    similarity = dict()
+    for i in range(N):
+        similarity[i] = 0.0
+        sum = 0.0
+        vector_size = 0.0
+        for j in q_tf.keys():
+            if i in tfidf.get(j):
+                sum = sum + (q_tf.get(j) * tfidf.get(j).get(i))
+                # print(tfidf.get(j).get(i), q_tf.get(j), i)
+                vector_size = vector_size + (tfidf.get(j).get(i) * tfidf.get(j).get(i))
+        if vector_size != 0.0:
+            similarity[i] = sum / (q_vector_size * math.sqrt(vector_size))
+            print(sum, q_vector_size, vector_size)
+        else:
+            del similarity[i]
+    print(similarity)
+
+
 
 if __name__ == '__main__':
     main()
